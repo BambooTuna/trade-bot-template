@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/zsais/go-gin-prometheus"
 	"net/http"
 	"sync"
 	"time"
@@ -19,31 +20,29 @@ const namespace = "trade_bot"
 
 func main() {
 	wg := new(sync.WaitGroup)
-	wg.Add(4)
+	wg.Add(2)
 
 	m := metrics.CreateMetrics(namespace)
 	go func() {
-		health := m.Gauge("health", map[string]string{})
-		health.Set(200)
 		ticker := time.NewTicker(time.Minute * 1)
 		defer ticker.Stop()
+		m.Gauge("health", map[string]string{"status": "Start"}).Set(1)
 		for {
 			select {
 			case <-ticker.C:
-				health.Set(200)
+				m.Gauge("health", map[string]string{"status": "Running"}).Set(1)
 			}
 		}
 	}()
 
 	mysqlConnection := mysql.GormConnection()
-	defer mysqlConnection.Close()
-
 	redisConnection := redis.RedisConnection(0)
-	defer redisConnection.Close()
 
 	go func() {
 		serverPort := config.GetEnvString("PORT", "18080")
 		r := gin.Default()
+		p := ginprometheus.NewPrometheus(namespace + "_gin")
+		p.Use(r)
 		r.GET("/", func(ctx *gin.Context) { ctx.Status(200) })
 		r.GET("/health", func(ctx *gin.Context) { ctx.Status(200) })
 		r.GET("/health/mysql", func(ctx *gin.Context) {
@@ -76,4 +75,8 @@ func main() {
 		wg.Done()
 	}()
 	wg.Wait()
+
+	_ = mysqlConnection.Close()
+	_ = redisConnection.Close()
+	m.Gauge("health", map[string]string{"status": "Closed"}).Set(1)
 }

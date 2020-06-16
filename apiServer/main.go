@@ -3,24 +3,18 @@ package main
 import (
 	"fmt"
 	"github.com/BambooTuna/go-server-lib/config"
+	"github.com/BambooTuna/go-server-lib/connection/mysql"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/BambooTuna/go-server-lib/metrics"
-
-	// mysql driver
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
-const namespace = "k8s_infra"
+const namespace = "trade_bot"
 
 func main() {
 	wg := new(sync.WaitGroup)
@@ -40,47 +34,14 @@ func main() {
 		}
 	}()
 
-	connect := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
-		config.GetEnvString("MYSQL_USER", "user"),
-		config.GetEnvString("MYSQL_PASS", "pass"),
-		config.GetEnvString("MYSQL_HOST", "127.0.0.1"),
-		config.GetEnvString("MYSQL_PORT", "3306"),
-		config.GetEnvString("MYSQL_DATABASE", "table"),
-	)
-	db, _ := gorm.Open("mysql", connect)
-	db.Close()
+	mysqlConnection := mysql.GormConnection()
+	defer mysqlConnection.Close()
 
 	go func() {
 		serverPort := config.GetEnvString("PORT", "18080")
 		r := gin.Default()
 		r.GET("/", func(ctx *gin.Context) { ctx.Status(200) })
 		r.GET("/health", func(ctx *gin.Context) { ctx.Status(200) })
-		_ = r.Run(fmt.Sprintf(":%s", serverPort))
-		wg.Done()
-	}()
-
-	go func() {
-		serverPort := "9090"
-		r := gin.Default()
-		r.Use(
-			reverseProxy(
-				"/",
-				&url.URL{Scheme: "http", Host: config.GetEnvString("PROMETHEUS_NAMESPACE", "prometheus-server")+":80"},
-			),
-		)
-		_ = r.Run(fmt.Sprintf(":%s", serverPort))
-		wg.Done()
-	}()
-
-	go func() {
-		serverPort := "3000"
-		r := gin.Default()
-		r.Use(
-			reverseProxy(
-				"/",
-				&url.URL{Scheme: "http", Host: config.GetEnvString("GRAFANA_NAMESPACE", "grafana")+":80"},
-			),
-		)
 		_ = r.Run(fmt.Sprintf(":%s", serverPort))
 		wg.Done()
 	}()
@@ -94,16 +55,4 @@ func main() {
 		wg.Done()
 	}()
 	wg.Wait()
-}
-
-func reverseProxy(urlPrefix string, target *url.URL) gin.HandlerFunc {
-	proxy := httputil.NewSingleHostReverseProxy(target)
-	proxy.FlushInterval = -1
-
-	return func(c *gin.Context) {
-		if strings.HasPrefix(c.Request.URL.Path, urlPrefix) {
-			c.Request.URL.Path = strings.Replace(c.Request.URL.Path, urlPrefix, "", 1)
-			proxy.ServeHTTP(c.Writer, c.Request)
-		}
-	}
 }

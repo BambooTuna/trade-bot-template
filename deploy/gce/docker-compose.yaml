@@ -11,6 +11,12 @@ services:
       - MYSQL_USER=user
       - MYSQL_PASSWORD=pass
 
+  redis:
+    image: redis:3.2.4-alpine
+    restart: always
+    ports:
+      - 6379:6379
+
   api-server:
     restart: always
     build: ../../apiServer
@@ -20,9 +26,10 @@ services:
       driver: gcplogs
     environment:
       - MYSQL_HOST=mysql
-      - MYSQL_PORT=3306
+      - REDIS_HOST=redis
     depends_on:
       - mysql
+      - redis
 
   prometheus:
     image: prom/prometheus

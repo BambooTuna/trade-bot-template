@@ -2,7 +2,7 @@ name: GCE Environment Use Terraform
 
 on:
   push:
-    branches: [ gce-staging ]
+    branches: [ staging ]
 
 jobs:
   apply-environment:

@@ -2,7 +2,7 @@ name: Deploy
 
 on:
   push:
-    branches: [ gce ]
+    branches: [ master ]
 
 jobs:
   deploy-gce:

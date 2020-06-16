@@ -45,7 +45,7 @@ resource "google_compute_instance" "default" {
 
   boot_disk {
     initialize_params {
-      size  = 10
+      size  = 30
       type  = "pd-standard"
       image = "projects/cos-cloud/global/images/cos-stable-81-12871-69-0"
     }
@@ -80,7 +80,7 @@ resource "google_compute_firewall" "default" {
 
   allow {
     protocol = "tcp"
-    ports    = ["${var.SSH_PORT}", "8080", "18080"]
+    ports    = ["${var.SSH_PORT}", "3000", "18080"]
   }
 
   target_tags = ["allow"]

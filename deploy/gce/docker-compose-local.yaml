@@ -29,6 +29,16 @@ services:
       - mysql
       - redis
 
+  jupyter:
+    restart: always
+    build: ../../tools/jupyter
+    ports:
+      - 8888:8888
+    volumes:
+      - ./volume/jupyter:/opt/python/jupyter
+      - ./volume/jupyterlab:/opt/python/jupyterlab
+      - ./volume/library:/opt/python/library
+
   prometheus:
     image: prom/prometheus
     volumes:

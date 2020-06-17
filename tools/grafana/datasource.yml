@@ -5,3 +5,7 @@ datasources:
     type: prometheus
     access: proxy
     url: prometheus:9090
+  - name: gdev-mysql
+    type: mysql
+    access: proxy
+    url: mysql:3306

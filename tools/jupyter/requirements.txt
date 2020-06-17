@@ -1,0 +1,19 @@
+# 一般
+requests
+
+# jupyter関連
+jupyterlab==0.35.4
+matplotlib==3.0.3
+numpy==1.16.2
+pandas==0.24.2
+plotly==3.7.1
+seaborn==0.9.0
+
+# 機械学習周辺ライブラリ
+bs4
+
+statsmodels
+scikit-learn # Required: NumPy, Scipy, Pandas
+
+# DB
+mysql-connector-python

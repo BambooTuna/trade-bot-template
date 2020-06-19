@@ -32,7 +32,7 @@ resource "google_compute_subnetwork" "default" {
   private_ip_google_access = true
 }
 
-resource "google_compute_address" "static_region_ip" {
+resource "google_compute_address" "default" {
   name   = "${var.GOOGLE_PROJECT_ID}-region-address"
   region = "${var.GOOGLE_COMPUTE_REGION}"
 }
@@ -55,7 +55,7 @@ resource "google_compute_instance" "default" {
     network    = "${google_compute_network.default.name}"
     subnetwork = "${google_compute_subnetwork.default.name}"
     access_config {
-      nat_ip = "${google_compute_address.static_region_ip.address}"
+      nat_ip = "${google_compute_address.default.address}"
     }
   }
 

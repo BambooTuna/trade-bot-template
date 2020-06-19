@@ -2,7 +2,7 @@ name: GCE Environment Use Terraform
 
 on:
   push:
-    branches: [ staging ]
+    branches: [ destroy ]
 
 jobs:
   apply-environment:
@@ -23,9 +23,6 @@ jobs:
       - name: apply
         working-directory: ./terraform/gce
         run: |
-          echo ${TF_VAR_GOOGLE_SERVICE_KEY} | base64 -d > ${TF_VAR_GOOGLE_CREDENTIALS_JSON_PATH}
-          export TF_VAR_SSH_PUB_KEY=${SSH_USERNAME}:`echo ${SSH_KEY_PUB} | base64 -d`
-          sed -e "s/<%SHH_PORT%>/${TF_VAR_SSH_PORT}/" cloud-config.tpl > cloud-config
           terraform init
           sh import.sh
-          sh apply.sh
+          sh destroy.sh
